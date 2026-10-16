@@ -1,452 +1,138 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mediciones de TV - Dashboard de Audiencia</title>
+  <title>Iniciar Sesión - Mediciones de TV</title>
   <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0284c7', 700: '#0369a1' }
-          }
-        }
-      }
-    }
-  </script>
-  <!-- FontAwesome & Chart.js -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
   <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
- 
-  <!-- Header / Navbar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
-          <i class="fa-solid fa-tv text-xl"></i>
-        </div>
-        <div>
-          <h1 class="font-bold text-lg text-white leading-none">Mediciones de TV</h1>
-          <span class="text-xs text-slate-400">Panel de Audiencia & Rating</span>
-        </div>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-700">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl mb-4 border border-blue-500/30">
+        <i class="fa-solid fa-tv text-2xl"></i>
       </div>
- 
-      <div class="flex items-center space-x-4">
-        <!-- Indicador de Rol -->
-        <span id="role-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
-          Cargando rol...
-        </span>
- 
-        <!-- Botón Cargar Datos (Solo visible para ADMIN) -->
-        <button id="btn-open-modal" onclick="openModal()" class="admin-only hidden bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2">
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Cargar Mediciones</span>
-        </button>
- 
-        <!-- Cerrar Sesión -->
-        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition rounded-lg hover:bg-slate-800" title="Cerrar Sesión">
-          <i class="fa-solid fa-right-from-bracket text-lg"></i>
-        </button>
-      </div>
+      <h1 class="text-2xl font-bold text-white mb-2">Acceso al Dashboard</h1>
+      <p class="text-sm text-slate-400">Ingresa tus credenciales para continuar</p>
     </div>
-  </header>
- 
-  <!-- Contenido Principal -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
- 
-    <!-- Panel de Filtros -->
-    <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
-          <i class="fa-solid fa-filter text-blue-400"></i>
-          <span>Filtros de Audiencia</span>
-        </h2>
-        <button onclick="resetFilters()" class="text-xs text-blue-400 hover:underline">Restablecer filtros</button>
-      </div>
- 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Canal</label>
-          <select id="filter-canal" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
-            <option value="ALL">Todos los canales</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Programa</label>
-          <select id="filter-programa" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
-            <option value="ALL">Todos los programas</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Día de la semana</label>
-          <select id="filter-dia" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
-            <option value="ALL">Todos los días</option>
-            <option value="Lunes">Lunes</option>
-            <option value="Martes">Martes</option>
-            <option value="Miércoles">Miércoles</option>
-            <option value="Jueves">Jueves</option>
-            <option value="Viernes">Viernes</option>
-            <option value="Sábado">Sábado</option>
-            <option value="Domingo">Domingo</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-400 mb-1">Mes</label>
-          <select id="filter-mes" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
-            <option value="ALL">Todos los meses</option>
-          </select>
-        </div>
-      </div>
-    </div>
- 
-    <!-- Cards KPI -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
-        <span class="text-xs text-slate-400">Rating Promedio</span>
-        <div class="text-3xl font-bold text-white mt-1" id="kpi-rating">0.0 <span class="text-sm font-normal text-slate-400">pts</span></div>
-      </div>
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
-        <span class="text-xs text-slate-400">Share Promedio</span>
-        <div class="text-3xl font-bold text-emerald-400 mt-1" id="kpi-share">0.0<span class="text-sm font-normal text-slate-400">%</span></div>
-      </div>
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
-        <span class="text-xs text-slate-400">Reach Total</span>
-        <div class="text-3xl font-bold text-blue-400 mt-1" id="kpi-reach">0 <span class="text-sm font-normal text-slate-400">m</span></div>
-      </div>
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
-        <span class="text-xs text-slate-400">Fidelidad Media</span>
-        <div class="text-3xl font-bold text-amber-400 mt-1" id="kpi-fidelidad">0 <span class="text-sm font-normal text-slate-400">min</span></div>
-      </div>
-    </div>
- 
-    <!-- Gráficos principales -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl">
-        <h3 class="text-sm font-semibold text-slate-200 mb-4">Rating por Programa</h3>
-        <div class="h-64"><canvas id="chartProgramas"></canvas></div>
-      </div>
-      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl">
-        <h3 class="text-sm font-semibold text-slate-200 mb-4">Distribución de Share por Canal</h3>
-        <div class="h-64"><canvas id="chartCanales"></canvas></div>
-      </div>
-    </div>
- 
-    <!-- Tabla de Mediciones -->
-    <div class="bg-slate-800 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl">
-      <div class="p-5 border-b border-slate-700/60">
-        <h3 class="text-sm font-semibold text-slate-200">Detalle de Registros de Rating</h3>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-300">
-          <thead class="bg-slate-900/60 text-slate-400 uppercase text-xs">
-            <tr>
-              <th class="py-3 px-4">Canal</th>
-              <th class="py-3 px-4">Programa</th>
-              <th class="py-3 px-4">Día</th>
-              <th class="py-3 px-4">Mes</th>
-              <th class="py-3 px-4 text-right">Rating</th>
-              <th class="py-3 px-4 text-right">Share</th>
-              <th class="py-3 px-4 text-right admin-only hidden">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="table-body" class="divide-y divide-slate-700/50">
-            <!-- Cargado dinámicamente -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
- 
-  <!-- Modal para Cargar Mediciones (ADMIN ONLY) -->
-  <div id="modal-form" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-      <h3 class="text-lg font-bold text-white mb-4">Cargar Registro de Rating</h3>
-      <form id="add-form" onsubmit="saveMeasurement(event)" class="space-y-4">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Canal</label>
-            <input type="text" id="input-canal" required placeholder="ej. Telefe" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
+
+    <!-- Alert de Error / Éxito -->
+    <div id="alert-box" class="hidden mb-6 p-4 rounded-xl text-sm border"></div>
+
+    <!-- Formulario -->
+    <form id="login-form" class="space-y-5">
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Correo Electrónico</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+            <i class="fa-solid fa-envelope"></i>
           </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Programa</label>
-            <input type="text" id="input-programa" required placeholder="ej. Noticiero" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
-          </div>
+          <input 
+            type="email" 
+            id="email" 
+            required 
+            placeholder="usuario@empresa.com"
+            class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-200 placeholder-slate-500 outline-none transition"
+          >
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Día</label>
-            <select id="input-dia" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
-              <option value="Lunes">Lunes</option>
-              <option value="Martes">Martes</option>
-              <option value="Miércoles">Miércoles</option>
-              <option value="Jueves">Jueves</option>
-              <option value="Viernes">Viernes</option>
-              <option value="Sábado">Sábado</option>
-              <option value="Domingo">Domingo</option>
-            </select>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+            <i class="fa-solid fa-lock"></i>
           </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Mes</label>
-            <input type="text" id="input-mes" required placeholder="ej. Enero" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
-          </div>
+          <input 
+            type="password" 
+            id="password" 
+            required 
+            placeholder="••••••••"
+            class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-200 placeholder-slate-500 outline-none transition"
+          >
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Rating (pts)</label>
-            <input type="number" step="0.1" id="input-rating" required placeholder="12.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Share (%)</label>
-            <input type="number" step="0.1" id="input-share" required placeholder="35.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none">
-          </div>
-        </div>
-        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-700">
-          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm font-semibold">Cancelar</button>
-          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-semibold">Guardar</button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <button 
+        type="submit" 
+        id="submit-btn"
+        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition duration-200 flex items-center justify-center space-x-2"
+      >
+        <span>Iniciar Sesión</span>
+        <i class="fa-solid fa-arrow-right text-sm"></i>
+      </button>
+    </form>
   </div>
- 
-  <!-- Lógica JavaScript -->
+
   <script>
-    // CREDENCIALES DE TU PROYECTO SUPABASE
-    const SUPABASE_URL = 'https://sotvmiyeinoldidpvyhd.supabase.co';[cite: 1]
-    const SUPABASE_KEY = 'sb_publishable_QK06zg7-6l6wqitqfGPEfA_zimMK...'; // Pega tu Publishable Key completa[cite: 3]
+    const SUPABASE_URL = '[https://sotvmiyeinoldidpvyhd.supabase.co](https://sotvmiyeinoldidpvyhd.supabase.co)';
+    const SUPABASE_KEY = 'sb_publishable_QK06zg7-6l6wqitqfGPefA_zimMKk4N';
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
- 
-    let rawData = [];
-    let currentUserRole = 'viewer';
-    let chartProgramasInstance = null;
-    let chartCanalesInstance = null;
- 
-    // 1. Validar Sesión y Cargar Rol
-    async function initDashboard() {
+
+    const loginForm = document.getElementById('login-form');
+    const alertBox = document.getElementById('alert-box');
+    const submitBtn = document.getElementById('submit-btn');
+
+    async function checkExistingSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        window.location.href = 'login.html';
-        return;
+      if (session) {
+        window.location.href = 'index.html';
       }
- 
-      // Obtener el rol del usuario
-      const { data: profile } = await supabaseClient
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
- 
-      if (profile) {
-        currentUserRole = profile.role;
-        document.getElementById('role-badge').textContent = `Rol: ${currentUserRole.toUpperCase()}`;
-        if (currentUserRole === 'admin') {
-          document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-        }
-      }
- 
-      await fetchData();
     }
- 
-    // 2. Traer Datos de Supabase
-    async function fetchData() {
-      const { data, error } = await supabaseClient
-        .from('tv_measurements')
-        .select('*')
-        .order('created_at', { ascending: false });
- 
-      if (error) {
-        console.error('Error al obtener mediciones:', error);
-        return;
-      }
- 
-      rawData = data || [];
-      populateFilterOptions();
-      applyFilters();
-    }
- 
-    // 3. Poblar Filtros
-    function populateFilterOptions() {
-      const canales = [...new Set(rawData.map(d => d.canal))];
-      const programas = [...new Set(rawData.map(d => d.programa))];
-      const meses = [...new Set(rawData.map(d => d.mes))];
- 
-      fillSelect('filter-canal', canales, 'Todos los canales');
-      fillSelect('filter-programa', programas, 'Todos los programas');
-      fillSelect('filter-mes', meses, 'Todos los meses');
-    }
- 
-    function fillSelect(elementId, items, defaultText) {
-      const select = document.getElementById(elementId);
-      select.innerHTML = `<option value="ALL">${defaultText}</option>`;
-      items.forEach(item => {
-        select.innerHTML += `<option value="${item}">${item}</option>`;
-      });
-    }
- 
-    // 4. Aplicar Filtros
-    function applyFilters() {
-      const canalVal = document.getElementById('filter-canal').value;
-      const programaVal = document.getElementById('filter-programa').value;
-      const diaVal = document.getElementById('filter-dia').value;
-      const mesVal = document.getElementById('filter-mes').value;
- 
-      const filtered = rawData.filter(d => {
-        return (canalVal === 'ALL' || d.canal === canalVal) &&
-               (programaVal === 'ALL' || d.programa === programaVal) &&
-               (diaVal === 'ALL' || d.dia === diaVal) &&
-               (mesVal === 'ALL' || d.mes === mesVal);
-      });
- 
-      renderKPIs(filtered);
-      renderCharts(filtered);
-      renderTable(filtered);
-    }
- 
-    // 5. Renderizar KPIs
-    function renderKPIs(data) {
-      if (!data.length) {
-        document.getElementById('kpi-rating').textContent = '0.0 pts';
-        document.getElementById('kpi-share').textContent = '0.0%';
-        document.getElementById('kpi-reach').textContent = '0 m';
-        document.getElementById('kpi-fidelidad').textContent = '0 min';
-        return;
-      }
- 
-      const avgRating = (data.reduce((acc, curr) => acc + Number(curr.rating), 0) / data.length).toFixed(1);
-      const avgShare = (data.reduce((acc, curr) => acc + Number(curr.share), 0) / data.length).toFixed(1);
- 
-      document.getElementById('kpi-rating').innerHTML = `${avgRating} <span class="text-sm font-normal text-slate-400">pts</span>`;
-      document.getElementById('kpi-share').innerHTML = `${avgShare}<span class="text-sm font-normal text-slate-400">%</span>`;
-      document.getElementById('kpi-reach').innerHTML = `${(data.length * 150)} <span class="text-sm font-normal text-slate-400">m</span>`;
-      document.getElementById('kpi-fidelidad').innerHTML = `35 <span class="text-sm font-normal text-slate-400">min</span>`;
-    }
- 
-    // 6. Renderizar Gráficos Chart.js
-    function renderCharts(data) {
-      const programasMap = {};
-      const canalesMap = {};
- 
-      data.forEach(d => {
-        programasMap[d.programa] = (programasMap[d.programa] || 0) + Number(d.rating);
-        canalesMap[d.canal] = (canalesMap[d.canal] || 0) + Number(d.share);
-      });
- 
-      // Gráfico de Programas
-      const ctxProg = document.getElementById('chartProgramas').getContext('2d');
-      if (chartProgramasInstance) chartProgramasInstance.destroy();
-      chartProgramasInstance = new Chart(ctxProg, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(programasMap),
-          datasets: [{
-            label: 'Rating Promedio',
-            data: Object.values(programasMap),
-            backgroundColor: '#0284c7',
-            borderRadius: 8
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
- 
-      // Gráfico de Canales
-      const ctxCanal = document.getElementById('chartCanales').getContext('2d');
-      if (chartCanalesInstance) chartCanalesInstance.destroy();
-      chartCanalesInstance = new Chart(ctxCanal, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(canalesMap),
-          datasets: [{
-            data: Object.values(canalesMap),
-            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
- 
-    // 7. Renderizar Tabla
-    function renderTable(data) {
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = '';
- 
-      if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-500">No hay datos registrados</td></tr>';
-        return;
-      }
- 
-      data.forEach(row => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-700/30 transition">
-            <td class="py-3 px-4 font-semibold text-white">${row.canal}</td>
-            <td class="py-3 px-4">${row.programa}</td>
-            <td class="py-3 px-4 text-slate-400">${row.dia}</td>
-            <td class="py-3 px-4 text-slate-400">${row.mes}</td>
-            <td class="py-3 px-4 text-right font-bold text-blue-400">${row.rating} pts</td>
-            <td class="py-3 px-4 text-right font-bold text-emerald-400">${row.share}%</td>
-            ${currentUserRole === 'admin' ? `
-              <td class="py-3 px-4 text-right">
-                <button onclick="deleteRecord(${row.id})" class="text-red-400 hover:text-red-300 p-1" title="Eliminar">
-                  <i class="fa-solid fa-trash text-xs"></i>
-                </button>
-              </td>
-            ` : ''}
-          </tr>
-        `;
-      });
-    }
- 
-    // 8. Funciones de Edición/Carga (Solo ADMIN)
-    function openModal() { document.getElementById('modal-form').classList.remove('hidden'); }
-    function closeModal() { document.getElementById('modal-form').classList.add('hidden'); }
- 
-    async function saveMeasurement(e) {
+    checkExistingSession();
+
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const newRecord = {
-        canal: document.getElementById('input-canal').value,
-        programa: document.getElementById('input-programa').value,
-        dia: document.getElementById('input-dia').value,
-        mes: document.getElementById('input-mes').value,
-        rating: parseFloat(document.getElementById('input-rating').value),
-        share: parseFloat(document.getElementById('input-share').value)
-      };
- 
-      const { error } = await supabaseClient.from('tv_measurements').insert([newRecord]);
-      if (error) {
-        alert('Error al guardar registro: ' + error.message);
-      } else {
-        closeModal();
-        document.getElementById('add-form').reset();
-        await fetchData();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Verificando...</span>';
+      showAlert('', 'hidden');
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) throw error;
+
+        showAlert('Inicio de sesión correcto. Redirigiendo...', 'success');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+
+      } catch (error) {
+        showAlert(error.message || 'Error al iniciar sesión. Revisa tus credenciales.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right text-sm"></i>';
       }
+    });
+
+    function showAlert(message, type) {
+      if (type === 'hidden') {
+        alertBox.className = 'hidden mb-6 p-4 rounded-xl text-sm border';
+        return;
+      }
+
+      alertBox.classList.remove('hidden');
+      if (type === 'error') {
+        alertBox.className = 'mb-6 p-4 rounded-xl text-sm border bg-red-500/10 border-red-500/30 text-red-400';
+      } else if (type === 'success') {
+        alertBox.className = 'mb-6 p-4 rounded-xl text-sm border bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
+      }
+      alertBox.textContent = message;
     }
- 
-    async function deleteRecord(id) {
-      if (!confirm('¿Estás seguro de eliminar este registro?')) return;
-      const { error } = await supabaseClient.from('tv_measurements').delete().eq('id', id);
-      if (!error) await fetchData();
-    }
- 
-    function resetFilters() {
-      document.getElementById('filter-canal').value = 'ALL';
-      document.getElementById('filter-programa').value = 'ALL';
-      document.getElementById('filter-dia').value = 'ALL';
-      document.getElementById('filter-mes').value = 'ALL';
-      applyFilters();
-    }
- 
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      window.location.href = 'login.html';
-    }
- 
-    initDashboard();
   </script>
 </body>
 </html>
