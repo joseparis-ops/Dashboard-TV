@@ -1,44 +1,468 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://sotvmiyeinoldidpvyhd.supabase.co';[cite: 1]
-  const SUPABASE_KEY = 'TU_PUBLISHABLE_KEY_AQUI';[cite: 3]
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  async function checkSessionAndRole() {
-    // 1. Validar que el usuario haya iniciado sesión
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      window.location.href = 'login.html'; // Si no hay sesión, volver al login
-      return;
-    }
-
-    // 2. Traer el rol del usuario desde la tabla 'profiles'
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    // 3. Ocultar o mostrar controles según el rol
-    if (profile.role === 'viewer') {
-      // Si es Viewer, ocultamos todos los elementos con la clase "admin-only"
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-    }
-
-    // 4. Cargar los datos desde Supabase
-    loadDashboardData();
-  }
-
-  async function loadDashboardData() {
-    const { data, error } = await supabaseClient
-      .from('tv_measurements')
-      .select('*');
-
-    if (!error && data) {
-      // Reemplaza los datos locales con la información recibida de la base de datos
-      updateDashboardWithData(data);
-    }
-  }
-
-  checkSessionAndRole();
-</script>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2113.65">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="es" class="dark"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Mediciones de TV - Dashboard de Audiencia&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Tailwind CSS --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>tailwind.config = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>darkMode: 'class',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>theme: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>extend: {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>colors: {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0284c7', 700: '#0369a1' }</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- FontAwesome &amp; Chart.js --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/chart.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Supabase JS Client --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Header / Navbar --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="flex items-center space-x-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;i class="fa-solid fa-tv text-xl"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h1 class="font-bold text-lg text-white leading-none"&gt;Mediciones de TV&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="text-xs text-slate-400"&gt;Panel de Audiencia &amp; Rating&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="flex items-center space-x-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- Indicador de Rol --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span id="role-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>Cargando rol...</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/span&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- Botón Cargar Datos (Solo visible para ADMIN) --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button id="btn-open-modal" onclick="openModal()" class="admin-only hidden bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;i class="fa-solid fa-plus text-xs"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span&gt;Cargar Mediciones&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;!-- Cerrar Sesión --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition rounded-lg hover:bg-slate-800" title="Cerrar Sesión"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;i class="fa-solid fa-right-from-bracket text-lg"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/header&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Contenido Principal --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Panel de Filtros --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-5 shadow-xl"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="flex items-center justify-between mb-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;i class="fa-solid fa-filter text-blue-400"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;span&gt;Filtros de Audiencia&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;button onclick="resetFilters()" class="text-xs text-blue-400 hover:underline"&gt;Restablecer filtros&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1"&gt;Canal&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;select id="filter-canal" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="ALL"&gt;Todos los canales&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1"&gt;Programa&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;select id="filter-programa" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="ALL"&gt;Todos los programas&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1"&gt;Día de la semana&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;select id="filter-dia" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="ALL"&gt;Todos los días&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Lunes"&gt;Lunes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Martes"&gt;Martes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Miércoles"&gt;Miércoles&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Jueves"&gt;Jueves&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Viernes"&gt;Viernes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Sábado"&gt;Sábado&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="Domingo"&gt;Domingo&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;label class="block text-xs font-medium text-slate-400 mb-1"&gt;Mes&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;select id="filter-mes" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;option value="ALL"&gt;Todos los meses&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Cards KPI --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="text-xs text-slate-400"&gt;Rating Promedio&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="text-3xl font-bold text-white mt-1" id="kpi-rating"&gt;0.0 &lt;span class="text-sm font-normal text-slate-400"&gt;pts&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="text-xs text-slate-400"&gt;Share Promedio&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="text-3xl font-bold text-emerald-400 mt-1" id="kpi-share"&gt;0.0&lt;span class="text-sm font-normal text-slate-400"&gt;%&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="text-xs text-slate-400"&gt;Reach Total&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="text-3xl font-bold text-blue-400 mt-1" id="kpi-reach"&gt;0 &lt;span class="text-sm font-normal text-slate-400"&gt;m&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="text-xs text-slate-400"&gt;Fidelidad Media&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="text-3xl font-bold text-amber-400 mt-1" id="kpi-fidelidad"&gt;0 &lt;span class="text-sm font-normal text-slate-400"&gt;min&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Gráficos principales --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="grid grid-cols-1 lg:grid-cols-2 gap-6"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h3 class="text-sm font-semibold text-slate-200 mb-4"&gt;Rating por Programa&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="h-64"&gt;&lt;canvas id="chartProgramas"&gt;&lt;/canvas&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-xl"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h3 class="text-sm font-semibold text-slate-200 mb-4"&gt;Distribución de Share por Canal&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="h-64"&gt;&lt;canvas id="chartCanales"&gt;&lt;/canvas&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Tabla de Mediciones --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="bg-slate-800 border border-slate-700/60 rounded-2xl overflow-hidden shadow-xl"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="p-5 border-b border-slate-700/60"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h3 class="text-sm font-semibold text-slate-200"&gt;Detalle de Registros de Rating&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="overflow-x-auto"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;table class="w-full text-left text-sm text-slate-300"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;thead class="bg-slate-900/60 text-slate-400 uppercase text-xs"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;tr&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4"&gt;Canal&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4"&gt;Programa&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4"&gt;Día&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4"&gt;Mes&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4 text-right"&gt;Rating&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4 text-right"&gt;Share&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;th class="py-3 px-4 text-right admin-only hidden"&gt;Acciones&lt;/th&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/tr&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/thead&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;tbody id="table-body" class="divide-y divide-slate-700/50"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;!-- Cargado dinámicamente --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/tbody&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/table&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/main&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Modal para Cargar Mediciones (ADMIN ONLY) --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="modal-form" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h3 class="text-lg font-bold text-white mb-4"&gt;Cargar Registro de Rating&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;form id="add-form" onsubmit="saveMeasurement(event)" class="space-y-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="grid grid-cols-2 gap-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Canal&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" id="input-canal" required placeholder="ej. Telefe" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Programa&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" id="input-programa" required placeholder="ej. Noticiero" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="grid grid-cols-2 gap-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Día&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;select id="input-dia" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Lunes"&gt;Lunes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Martes"&gt;Martes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Miércoles"&gt;Miércoles&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Jueves"&gt;Jueves&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Viernes"&gt;Viernes&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Sábado"&gt;Sábado&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;option value="Domingo"&gt;Domingo&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Mes&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="text" id="input-mes" required placeholder="ej. Enero" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="grid grid-cols-2 gap-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Rating (pts)&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="number" step="0.1" id="input-rating" required placeholder="12.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;label class="block text-xs text-slate-400 mb-1"&gt;Share (%)&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;input type="number" step="0.1" id="input-share" required placeholder="35.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white outline-none"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="flex justify-end space-x-3 pt-4 border-t border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl text-sm font-semibold"&gt;Cancelar&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-sm font-semibold"&gt;Guardar&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/form&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- Lógica JavaScript --&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// CREDENCIALES DE TU PROYECTO SUPABASE</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const SUPABASE_URL = 'https://sotvmiyeinoldidpvyhd.supabase.co';[cite: 1]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const SUPABASE_KEY = 'sb_publishable_QK06zg7-6l6wqitqfGPEfA_zimMK...'; // Pega tu Publishable Key completa[cite: 3]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>let rawData = [];</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let currentUserRole = 'viewer';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let chartProgramasInstance = null;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let chartCanalesInstance = null;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 1. Validar Sesión y Cargar Rol</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function initDashboard() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const { data: { session } } = await supabaseClient.auth.getSession();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!session) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>window.location.href = 'login.html';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Obtener el rol del usuario</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const { data: profile } = await supabaseClient</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.from('profiles')</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.select('role')</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.eq('id', session.user.id)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.single();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (profile) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>currentUserRole = profile.role;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('role-badge').textContent = `Rol: ${currentUserRole.toUpperCase()}`;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (currentUserRole === 'admin') {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>document.querySelectorAll('.admin-only').forEach(el =&gt; el.classList.remove('hidden'));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>await fetchData();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 2. Traer Datos de Supabase</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function fetchData() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const { data, error } = await supabaseClient</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.from('tv_measurements')</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.select('*')</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.order('created_at', { ascending: false });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (error) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.error('Error al obtener mediciones:', error);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>rawData = data || [];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>populateFilterOptions();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>applyFilters();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 3. Poblar Filtros</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function populateFilterOptions() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const canales = [...new Set(rawData.map(d =&gt; d.canal))];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const programas = [...new Set(rawData.map(d =&gt; d.programa))];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const meses = [...new Set(rawData.map(d =&gt; d.mes))];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>fillSelect('filter-canal', canales, 'Todos los canales');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>fillSelect('filter-programa', programas, 'Todos los programas');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>fillSelect('filter-mes', meses, 'Todos los meses');</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function fillSelect(elementId, items, defaultText) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const select = document.getElementById(elementId);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>select.innerHTML = `&lt;option value="ALL"&gt;${defaultText}&lt;/option&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>items.forEach(item =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>select.innerHTML += `&lt;option value="${item}"&gt;${item}&lt;/option&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 4. Aplicar Filtros</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function applyFilters() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const canalVal = document.getElementById('filter-canal').value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const programaVal = document.getElementById('filter-programa').value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const diaVal = document.getElementById('filter-dia').value;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const mesVal = document.getElementById('filter-mes').value;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const filtered = rawData.filter(d =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return (canalVal === 'ALL' || d.canal === canalVal) &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">               </span>(programaVal === 'ALL' || d.programa === programaVal) &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">               </span>(diaVal === 'ALL' || d.dia === diaVal) &amp;&amp;</p>
+<p class="p1"><span class="Apple-converted-space">               </span>(mesVal === 'ALL' || d.mes === mesVal);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>renderKPIs(filtered);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>renderCharts(filtered);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>renderTable(filtered);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 5. Renderizar KPIs</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function renderKPIs(data) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!data.length) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('kpi-rating').textContent = '0.0 pts';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('kpi-share').textContent = '0.0%';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('kpi-reach').textContent = '0 m';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('kpi-fidelidad').textContent = '0 min';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const avgRating = (data.reduce((acc, curr) =&gt; acc + Number(curr.rating), 0) / data.length).toFixed(1);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const avgShare = (data.reduce((acc, curr) =&gt; acc + Number(curr.share), 0) / data.length).toFixed(1);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('kpi-rating').innerHTML = `${avgRating} &lt;span class="text-sm font-normal text-slate-400"&gt;pts&lt;/span&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('kpi-share').innerHTML = `${avgShare}&lt;span class="text-sm font-normal text-slate-400"&gt;%&lt;/span&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('kpi-reach').innerHTML = `${(data.length * 150)} &lt;span class="text-sm font-normal text-slate-400"&gt;m&lt;/span&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('kpi-fidelidad').innerHTML = `35 &lt;span class="text-sm font-normal text-slate-400"&gt;min&lt;/span&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 6. Renderizar Gráficos Chart.js</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function renderCharts(data) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const programasMap = {};</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const canalesMap = {};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>data.forEach(d =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>programasMap[d.programa] = (programasMap[d.programa] || 0) + Number(d.rating);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>canalesMap[d.canal] = (canalesMap[d.canal] || 0) + Number(d.share);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Gráfico de Programas</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const ctxProg = document.getElementById('chartProgramas').getContext('2d');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (chartProgramasInstance) chartProgramasInstance.destroy();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>chartProgramasInstance = new Chart(ctxProg, {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'bar',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>data: {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>labels: Object.keys(programasMap),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>datasets: [{</p>
+<p class="p1"><span class="Apple-converted-space">            </span>label: 'Rating Promedio',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>data: Object.values(programasMap),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>backgroundColor: '#0284c7',</p>
+<p class="p1"><span class="Apple-converted-space">            </span>borderRadius: 8</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>},</p>
+<p class="p1"><span class="Apple-converted-space">        </span>options: { responsive: true, maintainAspectRatio: false }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Gráfico de Canales</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const ctxCanal = document.getElementById('chartCanales').getContext('2d');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (chartCanalesInstance) chartCanalesInstance.destroy();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>chartCanalesInstance = new Chart(ctxCanal, {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>type: 'doughnut',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>data: {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>labels: Object.keys(canalesMap),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>datasets: [{</p>
+<p class="p1"><span class="Apple-converted-space">            </span>data: Object.values(canalesMap),</p>
+<p class="p1"><span class="Apple-converted-space">            </span>backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}]</p>
+<p class="p1"><span class="Apple-converted-space">        </span>},</p>
+<p class="p1"><span class="Apple-converted-space">        </span>options: { responsive: true, maintainAspectRatio: false }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 7. Renderizar Tabla</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function renderTable(data) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const tbody = document.getElementById('table-body');</p>
+<p class="p1"><span class="Apple-converted-space">      </span>tbody.innerHTML = '';</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!data.length) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tbody.innerHTML = '&lt;tr&gt;&lt;td colspan="7" class="text-center py-6 text-slate-500"&gt;No hay datos registrados&lt;/td&gt;&lt;/tr&gt;';</p>
+<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>data.forEach(row =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tbody.innerHTML += `</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;tr class="hover:bg-slate-700/30 transition"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4 font-semibold text-white"&gt;${row.canal}&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4"&gt;${row.programa}&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4 text-slate-400"&gt;${row.dia}&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4 text-slate-400"&gt;${row.mes}&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4 text-right font-bold text-blue-400"&gt;${row.rating} pts&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;td class="py-3 px-4 text-right font-bold text-emerald-400"&gt;${row.share}%&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>${currentUserRole === 'admin' ? `</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;td class="py-3 px-4 text-right"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button onclick="deleteRecord(${row.id})" class="text-red-400 hover:text-red-300 p-1" title="Eliminar"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;i class="fa-solid fa-trash text-xs"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/td&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>` : ''}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/tr&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// 8. Funciones de Edición/Carga (Solo ADMIN)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function openModal() { document.getElementById('modal-form').classList.remove('hidden'); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function closeModal() { document.getElementById('modal-form').classList.add('hidden'); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function saveMeasurement(e) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>e.preventDefault();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const newRecord = {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>canal: document.getElementById('input-canal').value,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>programa: document.getElementById('input-programa').value,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>dia: document.getElementById('input-dia').value,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>mes: document.getElementById('input-mes').value,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rating: parseFloat(document.getElementById('input-rating').value),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>share: parseFloat(document.getElementById('input-share').value)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const { error } = await supabaseClient.from('tv_measurements').insert([newRecord]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (error) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>alert('Error al guardar registro: ' + error.message);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>closeModal();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('add-form').reset();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>await fetchData();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function deleteRecord(id) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!confirm('¿Estás seguro de eliminar este registro?')) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const { error } = await supabaseClient.from('tv_measurements').delete().eq('id', id);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!error) await fetchData();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function resetFilters() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('filter-canal').value = 'ALL';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('filter-programa').value = 'ALL';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('filter-dia').value = 'ALL';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('filter-mes').value = 'ALL';</p>
+<p class="p1"><span class="Apple-converted-space">      </span>applyFilters();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function logout() {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>await supabaseClient.auth.signOut();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>window.location.href = 'login.html';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>initDashboard();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
