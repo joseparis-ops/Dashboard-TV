@@ -1,138 +1,121 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión - Mediciones de TV</title>
-  <!-- Tailwind CSS -->
-  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-  <!-- FontAwesome -->
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
-  <!-- Supabase JS Client -->
-  <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
-
-  <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-700">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl mb-4 border border-blue-500/30">
-        <i class="fa-solid fa-tv text-2xl"></i>
-      </div>
-      <h1 class="text-2xl font-bold text-white mb-2">Acceso al Dashboard</h1>
-      <p class="text-sm text-slate-400">Ingresa tus credenciales para continuar</p>
-    </div>
-
-    <!-- Alert de Error / Éxito -->
-    <div id="alert-box" class="hidden mb-6 p-4 rounded-xl text-sm border"></div>
-
-    <!-- Formulario -->
-    <form id="login-form" class="space-y-5">
-      <div>
-        <label for="email" class="block text-sm font-medium text-slate-300 mb-2">Correo Electrónico</label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-            <i class="fa-solid fa-envelope"></i>
-          </div>
-          <input 
-            type="email" 
-            id="email" 
-            required 
-            placeholder="usuario@empresa.com"
-            class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-200 placeholder-slate-500 outline-none transition"
-          >
-        </div>
-      </div>
-
-      <div>
-        <label for="password" class="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-            <i class="fa-solid fa-lock"></i>
-          </div>
-          <input 
-            type="password" 
-            id="password" 
-            required 
-            placeholder="••••••••"
-            class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-200 placeholder-slate-500 outline-none transition"
-          >
-        </div>
-      </div>
-
-      <button 
-        type="submit" 
-        id="submit-btn"
-        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition duration-200 flex items-center justify-center space-x-2"
-      >
-        <span>Iniciar Sesión</span>
-        <i class="fa-solid fa-arrow-right text-sm"></i>
-      </button>
-    </form>
-  </div>
-
+  <title>Mediciones de TV - Dashboard de Audiencia</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    const SUPABASE_URL = '[https://sotvmiyeinoldidpvyhd.supabase.co](https://sotvmiyeinoldidpvyhd.supabase.co)';
-    const SUPABASE_KEY = 'sb_publishable_QK06zg7-6l6wqitqfGPefA_zimMKk4N';
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    const loginForm = document.getElementById('login-form');
-    const alertBox = document.getElementById('alert-box');
-    const submitBtn = document.getElementById('submit-btn');
-
-    async function checkExistingSession() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        window.location.href = 'index.html';
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f9ff', 500: '#0284c7', 600: '#0284c7', 700: '#0369a1' }
+          }
+        }
       }
-    }
-    checkExistingSession();
-
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Verificando...</span>';
-      showAlert('', 'hidden');
-
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-
-        if (error) throw error;
-
-        showAlert('Inicio de sesión correcto. Redirigiendo...', 'success');
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 800);
-
-      } catch (error) {
-        showAlert(error.message || 'Error al iniciar sesión. Revisa tus credenciales.', 'error');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right text-sm"></i>';
-      }
-    });
-
-    function showAlert(message, type) {
-      if (type === 'hidden') {
-        alertBox.className = 'hidden mb-6 p-4 rounded-xl text-sm border';
-        return;
-      }
-
-      alertBox.classList.remove('hidden');
-      if (type === 'error') {
-        alertBox.className = 'mb-6 p-4 rounded-xl text-sm border bg-red-500/10 border-red-500/30 text-red-400';
-      } else if (type === 'success') {
-        alertBox.className = 'mb-6 p-4 rounded-xl text-sm border bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-      }
-      alertBox.textContent = message;
     }
   </script>
-</body>
-</html>
+  
+  <!-- FontAwesome & Chart.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+
+  <!-- Header / Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+          <i class="fa-solid fa-tv text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-white leading-none">Mediciones de TV</h1>
+          <span class="text-xs text-slate-400">Panel de Audiencia & Rating</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- Indicador de Rol -->
+        <span id="role-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+          Cargando rol...
+        </span>
+
+        <!-- Botón Cargar Datos (Solo visible para ADMIN) -->
+        <button id="btn-open-modal" onclick="openModal()" class="admin-only hidden bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-2">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Cargar Mediciones</span>
+        </button>
+
+        <!-- Cerrar Sesión -->
+        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-400 transition rounded-lg hover:bg-slate-800" title="Cerrar Sesión">
+          <i class="fa-solid fa-right-from-bracket text-lg"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Panel de Filtros -->
+    <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+          <i class="fa-solid fa-filter text-blue-400"></i>
+          <span>Filtros de Audiencia</span>
+        </h2>
+        <button onclick="resetFilters()" class="text-xs text-blue-400 hover:underline">Restablecer filtros</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Canal</label>
+          <select id="filter-canal" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
+            <option value="ALL">Todos los canales</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Programa</label>
+          <select id="filter-programa" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
+            <option value="ALL">Todos los programas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Día de la semana</label>
+          <select id="filter-dia" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
+            <option value="ALL">Todos los días</option>
+            <option value="Lunes">Lunes</option>
+            <option value="Martes">Martes</option>
+            <option value="Miércoles">Miércoles</option>
+            <option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option>
+            <option value="Sábado">Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Mes</label>
+          <select id="filter-mes" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 outline-none focus:border-blue-500">
+            <option value="ALL">Todos los meses</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards KPI -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
+        <span class="text-xs text-slate-400">Rating Promedio</span>
+        <div class="text-3xl font-bold text-white mt-1" id="kpi-rating">0.0 <span class="text-sm font-normal text-slate-400">pts</span></div>
+      </div>
+      <div class="bg-slate-800 border border-slate-700/60 p-5 rounded-2xl shadow-lg">
+        <span class="text-xs text-slate-400">Share Promedio</span>
+        <div class="text-3xl font-bold text-emerald-400 mt-1" id="kpi-share">0.0<span class="text-sm font-normal text-slate
