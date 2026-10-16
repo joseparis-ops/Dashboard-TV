@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Mediciones TV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl">
+    <h1 class="text-2xl font-bold mb-6 text-center">Acceso al Dashboard</h1>
+    <div id="alert-box" class="hidden mb-4 p-3 rounded text-sm"></div>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1">Correo Electrónico</label>
+        <input type="email" id="email" required class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Contraseña</label>
+        <input type="password" id="password" required class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none">
+      </div>
+      <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold">Iniciar Sesión</button>
+    </form>
+  </div>
+
+  <script>
+    // CREDENCIALES DE TU PROYECTO
+    const SUPABASE_URL = 'https://sotvmiyeinoldidpvyhd.supabase.co';[cite: 1]
+    const SUPABASE_KEY = 'TU_PUBLISHABLE_KEY_AQUI'; // Pega tu sb_publishable_... completa[cite: 3]
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const alertBox = document.getElementById('alert-box');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alertBox.className = 'mb-4 p-3 rounded text-sm bg-red-500/20 text-red-400 border border-red-500/30';
+        alertBox.textContent = 'Error: ' + error.message;
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.className = 'mb-4 p-3 rounded text-sm bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        alertBox.textContent = 'Acceso correcto. Redirigiendo...';
+        alertBox.classList.remove('hidden');
+        setTimeout(() => { window.location.href = 'index.html'; }, 800);
+      }
+    });
+  </script>
+</body>
+</html>

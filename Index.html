@@ -1,0 +1,44 @@
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://sotvmiyeinoldidpvyhd.supabase.co';[cite: 1]
+  const SUPABASE_KEY = 'TU_PUBLISHABLE_KEY_AQUI';[cite: 3]
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function checkSessionAndRole() {
+    // 1. Validar que el usuario haya iniciado sesión
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html'; // Si no hay sesión, volver al login
+      return;
+    }
+
+    // 2. Traer el rol del usuario desde la tabla 'profiles'
+    const { data: profile } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    // 3. Ocultar o mostrar controles según el rol
+    if (profile.role === 'viewer') {
+      // Si es Viewer, ocultamos todos los elementos con la clase "admin-only"
+      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    }
+
+    // 4. Cargar los datos desde Supabase
+    loadDashboardData();
+  }
+
+  async function loadDashboardData() {
+    const { data, error } = await supabaseClient
+      .from('tv_measurements')
+      .select('*');
+
+    if (!error && data) {
+      // Reemplaza los datos locales con la información recibida de la base de datos
+      updateDashboardWithData(data);
+    }
+  }
+
+  checkSessionAndRole();
+</script>
